@@ -1,4 +1,6 @@
-﻿using NTC.Pool;
+﻿using Assets.Scripts.Signals;
+using NTC.Pool;
+using System;
 using UnityEngine;
 using Zenject;
 
@@ -6,7 +8,6 @@ using Zenject;
 public class Player : MonoBehaviour, IMovable, IAttackable
 {
     public new Rigidbody2D rigidbody { get; private set; }
-    public Bullet bulletPrefab;
     public bool Thrusting { set => _thrusting = value; }
     public float TurnDirection { set => _turnDirection = value; }
 
@@ -20,15 +21,20 @@ public class Player : MonoBehaviour, IMovable, IAttackable
 
     private bool _screenWrapping;
     private Bounds screenBounds;
+    private SignalBus _signalBus;
 
     [Inject]
-    private void Construct(GameConfig gameConfig)
+    private void Construct(GameConfig gameConfig, SignalBus signalBus)
     {
         _respawnInvulnerability = gameConfig.RespawnInvulnerability;
         _rotationSpeed = gameConfig.RotationSpeed;
         _thrustSpeed = gameConfig.ThrustSpeed;
         _screenWrapping = gameConfig.ScreenWrapping;
+        _signalBus = signalBus;
+        _signalBus.Subscribe<RespawnSignal>(Respawn);
     }
+
+
     private void Awake()
     {
         rigidbody = GetComponent<Rigidbody2D>();
@@ -79,13 +85,11 @@ public class Player : MonoBehaviour, IMovable, IAttackable
             rigidbody.position = new Vector2(rigidbody.position.x, screenBounds.max.y + 0.5f);
         }
     }
-
     private void Shoot()
     {
         if(!gameObject.activeSelf) 
             return;
-        Bullet bullet = NightPool.Spawn(bulletPrefab, transform.position, transform.rotation);
-        bullet.Shoot(transform.up);
+        _signalBus.Fire(new PlayerAttackSignal() { Position = transform.position, Rotation = transform.rotation, Direction = transform.up });
     }
 
     private void TurnOffCollisions()
@@ -104,9 +108,18 @@ public class Player : MonoBehaviour, IMovable, IAttackable
         {
             rigidbody.velocity = Vector3.zero;
             rigidbody.angularVelocity = 0f;
-
-            GameManager.Instance.OnPlayerDeath(this);
+            gameObject.SetActive(false);
+            PlayerDeathSignal playerDeathSignal = new PlayerDeathSignal()
+            {
+                GameObject = gameObject
+            };
+            _signalBus.Fire(playerDeathSignal);
         }
+    }
+    private void Respawn()
+    {
+        gameObject.transform.position = Vector3.zero;
+        gameObject.SetActive(true);
     }
     public void Attack() => Shoot();
 }

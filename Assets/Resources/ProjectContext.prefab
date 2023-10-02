@@ -74,3 +74,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _gameConfig: {fileID: 11400000, guid: 50c1053c5584681468b60ddb8ebbd0ef, type: 2}
+  _projectilePrefab: {fileID: 1516617292126257879, guid: d8d55dfacb762f64cbf4c05cc402a4de,
+    type: 3}

@@ -16,5 +16,8 @@ public class GameConfig : ScriptableObject
     [field: SerializeField, Range(0f, 45f)] public float TrajectoryVariance { get; private set; } = 15f;
 
 
-    
+    [field: SerializeField] public float Speed { get; private set; } = 500f;
+    [field: SerializeField] public int MaxLifeTime { get; private set; } = 10;
+
+
 }
